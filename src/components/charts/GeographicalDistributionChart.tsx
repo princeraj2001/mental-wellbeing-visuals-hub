@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import * as d3 from 'd3';
 import D3Container from '../D3Container';
@@ -9,12 +8,18 @@ interface CountryNode extends d3.SimulationNodeDatum {
   country: string;
   value: number;
   total: number;
+  x: number;
+  y: number;
 }
 
-const GeographicalDistributionChart = () => {
+interface GeographicalDistributionChartProps {
+  country?: string;
+}
+
+const GeographicalDistributionChart: React.FC<GeographicalDistributionChartProps> = ({ country = 'Global' }) => {
   const renderChart = useCallback((container: HTMLDivElement) => {
     // Define country data with mental health support ratings
-    const data: CountryNode[] = [
+    const allData: CountryNode[] = [
       { id: "USA", country: "United States", value: 58, total: 751, x: 0, y: 0 },
       { id: "CAN", country: "Canada", value: 63, total: 87, x: 0, y: 0 },
       { id: "GBR", country: "United Kingdom", value: 49, total: 55, x: 0, y: 0 },
@@ -26,6 +31,9 @@ const GeographicalDistributionChart = () => {
       { id: "BRA", country: "Brazil", value: 45, total: 19, x: 0, y: 0 },
       { id: "FRA", country: "France", value: 68, total: 16, x: 0, y: 0 }
     ];
+
+    // Filter data based on selected country
+    const data = country === 'Global' ? allData : allData.filter(d => d.id === country);
 
     // Set up dimensions
     const width = container.clientWidth;
@@ -55,7 +63,8 @@ const GeographicalDistributionChart = () => {
       .style('color', 'white')
       .style('padding', '8px')
       .style('border-radius', '4px')
-      .style('pointer-events', 'none');
+      .style('pointer-events', 'none')
+      .style('z-index', '100');
 
     // Color scale
     const colorScale = d3.scaleLinear<string>()
@@ -69,11 +78,10 @@ const GeographicalDistributionChart = () => {
       .range([10, 50]);
 
     // Create a force simulation
-    const simulation = d3.forceSimulation<CountryNode>()
-      .nodes(data)
+    const simulation = d3.forceSimulation<CountryNode>(data)
       .force('center', d3.forceCenter(innerWidth / 2, innerHeight / 2))
       .force('charge', d3.forceManyBody().strength(5))
-      .force('collide', d3.forceCollide().radius(d => sizeScale(d.total) + 2).strength(0.7))
+      .force('collide', d3.forceCollide<CountryNode>().radius(d => sizeScale(d.total) + 2).strength(0.7))
       .on('tick', ticked);
 
     // Create bubble groups
@@ -98,7 +106,7 @@ const GeographicalDistributionChart = () => {
            Support Rating: ${d.value}%<br>
            Participants: ${d.total}`
         )
-          .style('left', `${event.pageX}px`)
+          .style('left', `${event.pageX + 10}px`)
           .style('top', `${event.pageY - 28}px`);
       })
       .on('mouseout', function() {
@@ -144,8 +152,8 @@ const GeographicalDistributionChart = () => {
       bubbles
         .attr('transform', d => {
           // Keep the bubbles within bounds
-          d.x = Math.max(sizeScale(d.total), Math.min(innerWidth - sizeScale(d.total), d.x as number));
-          d.y = Math.max(sizeScale(d.total), Math.min(innerHeight - sizeScale(d.total), d.y as number));
+          d.x = Math.max(sizeScale(d.total), Math.min(innerWidth - sizeScale(d.total), d.x));
+          d.y = Math.max(sizeScale(d.total), Math.min(innerHeight - sizeScale(d.total), d.y));
           return `translate(${d.x},${d.y})`;
         });
     }
@@ -207,43 +215,14 @@ const GeographicalDistributionChart = () => {
       .attr('text-anchor', 'middle')
       .attr('font-size', '11px')
       .text('Mental Health Support Rating');
-
-    // Add size legend
-    const sizeLegend = svg.append('g')
-      .attr('class', 'size-legend')
-      .attr('transform', `translate(${width - legendWidth - 20}, ${height - 100})`);
-
-    sizeLegend.append('circle')
-      .attr('cx', 10)
-      .attr('cy', 10)
-      .attr('r', 10)
-      .attr('fill', 'none')
-      .attr('stroke', '#666')
-      .attr('stroke-width', 1);
-
-    sizeLegend.append('text')
-      .attr('x', 25)
-      .attr('y', 15)
-      .attr('font-size', '11px')
-      .text('Size: Number of participants');
-
-    // Add title
-    svg.append('text')
-      .attr('class', 'chart-title')
-      .attr('x', width / 2)
-      .attr('y', 15)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '14px')
-      .attr('font-weight', 'bold')
-      .text('Geographic Distribution');
-  }, []);
+  }, [country]);
 
   return (
     <D3Container
       title="Global Mental Health Support"
       description="Mental health support ratings across different countries"
       renderChart={renderChart}
-      className="col-span-1 md:col-span-3"
+      className="col-span-1"
     />
   );
 };

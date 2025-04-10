@@ -27,10 +27,10 @@ const WellnessProgramChart = () => {
       .append('g')
       .attr('transform', `translate(${width / 2}, ${height / 2})`);
 
-    // Create color scale
+    // Create color scale - updated as requested
     const color = d3.scaleOrdinal()
       .domain(data.map(d => d.response))
-      .range(['#0EA5E9', '#9b87f5', '#d1d5db']);
+      .range(['#90EE90', '#FA8072', '#d1d5db']);
 
     // Setup the pie chart
     const pie = d3.pie<any>()
@@ -57,7 +57,8 @@ const WellnessProgramChart = () => {
       .style('color', 'white')
       .style('padding', '8px')
       .style('border-radius', '4px')
-      .style('pointer-events', 'none');
+      .style('pointer-events', 'none')
+      .style('z-index', '100');
 
     // Add arcs
     const arcs = svg.selectAll('.arc')
@@ -85,7 +86,7 @@ const WellnessProgramChart = () => {
           .duration(200)
           .style('opacity', 0.9);
         tooltip.html(`<strong>${d.data.response}</strong>: ${d.data.count} (${percent}%)`)
-          .style('left', `${event.pageX}px`)
+          .style('left', `${event.pageX + 10}px`)
           .style('top', `${event.pageY - 28}px`);
       })
       .on('mouseout', function() {
@@ -187,7 +188,7 @@ const WellnessProgramChart = () => {
       title="Wellness Program Availability"
       description="Has your employer discussed mental health as part of wellness programs?"
       renderChart={renderChart}
-      className="col-span-1 md:col-span-1"
+      className="col-span-1"
     />
   );
 };

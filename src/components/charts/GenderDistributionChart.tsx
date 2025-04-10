@@ -41,10 +41,10 @@ const GenderDistributionChart = () => {
       .nice()
       .range([innerHeight, 0]);
 
-    // Create color scale
+    // Create color scale - updated colors as requested
     const color = d3.scaleOrdinal()
       .domain(data.map(d => d.gender))
-      .range(['#9b87f5', '#0EA5E9', '#7E69AB']);
+      .range(['#ADD8E6', '#FFC0CB', '#7E69AB']);
 
     // Add the X-axis
     g.append('g')
@@ -86,7 +86,8 @@ const GenderDistributionChart = () => {
       .style('color', 'white')
       .style('padding', '8px')
       .style('border-radius', '4px')
-      .style('pointer-events', 'none');
+      .style('pointer-events', 'none')
+      .style('z-index', '100');
 
     // Add the bars with animation
     g.selectAll('.bar')
@@ -102,12 +103,17 @@ const GenderDistributionChart = () => {
       .attr('rx', 4)
       .on('mouseover', function(event, d) {
         d3.select(this).attr('opacity', 0.8);
+        
+        // Calculate percentage
+        const total = d3.sum(data, d => d.count);
+        const percentage = ((d.count / total) * 100).toFixed(1);
+        
         tooltip.transition()
           .duration(200)
           .style('opacity', 0.9);
-        tooltip.html(`<strong>${d.gender}</strong>: ${d.count} respondents`)
-          .style('left', `${event.pageX}px`)
-          .style('top', `${(event.pageY - 28)}px`);
+        tooltip.html(`<strong>${d.gender}</strong><br>${d.count} respondents<br>${percentage}% of total`)
+          .style('left', `${event.pageX + 10}px`)
+          .style('top', `${event.pageY - 28}px`);
       })
       .on('mouseout', function() {
         d3.select(this).attr('opacity', 1);
@@ -138,21 +144,6 @@ const GenderDistributionChart = () => {
       .duration(500)
       .style('opacity', 1);
 
-    // Add annotations
-    g.append('text')
-      .attr('class', 'annotation')
-      .attr('x', x('Male') as number + x.bandwidth() / 2)
-      .attr('y', y(800))
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '12px')
-      .attr('fill', '#333')
-      .text('59.6% Male')
-      .style('opacity', 0)
-      .transition()
-      .delay(1200)
-      .duration(500)
-      .style('opacity', 1);
-
     // Add title
     svg.append('text')
       .attr('class', 'chart-title')
@@ -168,7 +159,7 @@ const GenderDistributionChart = () => {
     <D3Container
       title="Gender Distribution"
       description="Breakdown of survey respondents by gender identity"
-      className="col-span-1 md:col-span-1"
+      className="col-span-1"
       renderChart={renderChart}
     />
   );

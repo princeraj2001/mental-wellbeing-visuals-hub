@@ -64,12 +64,6 @@
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
@@ -103,7 +97,14 @@
   border-radius: 4px;
   pointer-events: none;
   font-size: 14px;
-  z-index: 10;
+  z-index: 100;
+  max-width: 200px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .tooltip {
+  background: rgba(255, 255, 255, 0.9);
+  color: black;
 }
 
 .chart-title {
@@ -113,9 +114,18 @@
   margin-bottom: 1rem;
 }
 
+.dark .chart-title {
+  fill: #fff;
+}
+
 .axis line,
 .axis path {
   stroke: #ccc;
+}
+
+.dark .axis line,
+.dark .axis path {
+  stroke: #666;
 }
 
 .axis text {
@@ -123,10 +133,18 @@
   font-size: 12px;
 }
 
+.dark .axis text {
+  fill: #ccc;
+}
+
 .grid line {
   stroke: #eee;
   stroke-opacity: 0.5;
   shape-rendering: crispEdges;
+}
+
+.dark .grid line {
+  stroke: #444;
 }
 
 .node {
@@ -142,9 +160,17 @@
   fill: #333;
 }
 
+.dark .annotation {
+  fill: #ccc;
+}
+
 .annotation-connector path {
   stroke: #333;
   fill: none;
+}
+
+.dark .annotation-connector path {
+  stroke: #ccc;
 }
 
 .dashboard-card {
@@ -154,4 +180,8 @@
 .dashboard-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.dark .dashboard-card:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
 }

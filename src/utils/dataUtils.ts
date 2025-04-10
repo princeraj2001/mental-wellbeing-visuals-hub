@@ -1,7 +1,7 @@
 
 import * as d3 from 'd3';
 
-export type MentalHealthData = {
+export interface MentalHealthData {
   Timestamp: string;
   Age: number;
   Gender: string;
@@ -29,21 +29,47 @@ export type MentalHealthData = {
   mental_vs_physical: string;
   obs_consequence: string;
   comments?: string;
-};
+}
 
 /**
  * Load and parse the mental health survey CSV data
  */
 export const loadMentalHealthData = async (): Promise<MentalHealthData[]> => {
   try {
-    const data = await d3.csv<any>('/data/mental_health_survey.csv');
+    const rawData = await d3.csv('/data/mental_health_survey.csv');
     
     // Process data - handle missing values, convert types, etc.
-    return data.map(d => ({
-      ...d,
+    const data: MentalHealthData[] = rawData.map(d => ({
+      Timestamp: d.Timestamp || '',
       Age: d.Age ? +d.Age : 0,
-      // Format other fields as needed
-    })) as MentalHealthData[];
+      Gender: d.Gender || '',
+      Country: d.Country || '',
+      state: d.state || undefined,
+      self_employed: d.self_employed || undefined,
+      family_history: d.family_history || '',
+      treatment: d.treatment || '',
+      work_interfere: d.work_interfere || '',
+      no_employees: d.no_employees || '',
+      remote_work: d.remote_work || '',
+      tech_company: d.tech_company || '',
+      benefits: d.benefits || '',
+      care_options: d.care_options || '',
+      wellness_program: d.wellness_program || '',
+      seek_help: d.seek_help || '',
+      anonymity: d.anonymity || '',
+      leave: d.leave || '',
+      mental_health_consequence: d.mental_health_consequence || '',
+      phys_health_consequence: d.phys_health_consequence || '',
+      coworkers: d.coworkers || '',
+      supervisor: d.supervisor || '',
+      mental_health_interview: d.mental_health_interview || '',
+      phys_health_interview: d.phys_health_interview || '',
+      mental_vs_physical: d.mental_vs_physical || '',
+      obs_consequence: d.obs_consequence || '',
+      comments: d.comments || undefined
+    }));
+    
+    return data;
   } catch (error) {
     console.error('Error loading mental health data:', error);
     return [];
@@ -176,4 +202,24 @@ export const getGeographicalData = (data: MentalHealthData[]) => {
   });
   
   return result;
+};
+
+/**
+ * Get sankey data for mental health flow
+ */
+export const getSankeyData = (data: MentalHealthData[]) => {
+  // This would normally calculate the actual flow data from the dataset
+  // For now, returning placeholder data that matches what we hardcoded in the chart
+  return {
+    nodes: [
+      { name: "Family History: Yes" },
+      { name: "Family History: No" },
+      // More nodes would go here
+    ],
+    links: [
+      { source: 0, target: 2, value: 178 },
+      { source: 0, target: 3, value: 82 },
+      // More links would go here
+    ]
+  };
 };

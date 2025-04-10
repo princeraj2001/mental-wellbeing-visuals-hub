@@ -1,21 +1,30 @@
+
 import React, { useCallback } from 'react';
 import * as d3 from 'd3';
 import D3Container from '../D3Container';
 
+// Define custom type for our data with the properties required by d3.forceSimulation
+interface CountryNode extends d3.SimulationNodeDatum {
+  id: string;
+  country: string;
+  value: number;
+  total: number;
+}
+
 const GeographicalDistributionChart = () => {
   const renderChart = useCallback((container: HTMLDivElement) => {
     // Define country data with mental health support ratings
-    const data = [
-      { id: "USA", country: "United States", value: 58, total: 751 },
-      { id: "CAN", country: "Canada", value: 63, total: 87 },
-      { id: "GBR", country: "United Kingdom", value: 49, total: 55 },
-      { id: "DEU", country: "Germany", value: 71, total: 38 },
-      { id: "AUS", country: "Australia", value: 52, total: 32 },
-      { id: "IND", country: "India", value: 42, total: 26 },
-      { id: "NLD", country: "Netherlands", value: 75, total: 22 },
-      { id: "IRL", country: "Ireland", value: 61, total: 21 },
-      { id: "BRA", country: "Brazil", value: 45, total: 19 },
-      { id: "FRA", country: "France", value: 68, total: 16 }
+    const data: CountryNode[] = [
+      { id: "USA", country: "United States", value: 58, total: 751, x: 0, y: 0 },
+      { id: "CAN", country: "Canada", value: 63, total: 87, x: 0, y: 0 },
+      { id: "GBR", country: "United Kingdom", value: 49, total: 55, x: 0, y: 0 },
+      { id: "DEU", country: "Germany", value: 71, total: 38, x: 0, y: 0 },
+      { id: "AUS", country: "Australia", value: 52, total: 32, x: 0, y: 0 },
+      { id: "IND", country: "India", value: 42, total: 26, x: 0, y: 0 },
+      { id: "NLD", country: "Netherlands", value: 75, total: 22, x: 0, y: 0 },
+      { id: "IRL", country: "Ireland", value: 61, total: 21, x: 0, y: 0 },
+      { id: "BRA", country: "Brazil", value: 45, total: 19, x: 0, y: 0 },
+      { id: "FRA", country: "France", value: 68, total: 16, x: 0, y: 0 }
     ];
 
     // Set up dimensions

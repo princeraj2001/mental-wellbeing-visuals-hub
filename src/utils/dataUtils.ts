@@ -36,14 +36,14 @@ export type MentalHealthData = {
  */
 export const loadMentalHealthData = async (): Promise<MentalHealthData[]> => {
   try {
-    const data = await d3.csv<MentalHealthData>('/data/mental_health_survey.csv');
+    const data = await d3.csv<any>('/data/mental_health_survey.csv');
     
     // Process data - handle missing values, convert types, etc.
     return data.map(d => ({
       ...d,
       Age: d.Age ? +d.Age : 0,
       // Format other fields as needed
-    }));
+    })) as MentalHealthData[];
   } catch (error) {
     console.error('Error loading mental health data:', error);
     return [];

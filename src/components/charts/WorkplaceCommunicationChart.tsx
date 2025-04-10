@@ -3,10 +3,20 @@ import React, { useCallback } from 'react';
 import * as d3 from 'd3';
 import D3Container from '../D3Container';
 
+interface CommunicationData {
+  category: string;
+  yes: number;
+  some: number;
+  no: number;
+  yesPercent?: number;
+  somePercent?: number;
+  noPercent?: number;
+}
+
 const WorkplaceCommunicationChart = () => {
   const renderChart = useCallback((container: HTMLDivElement) => {
     // Data for the chart
-    const data = [
+    const data: CommunicationData[] = [
       { category: "Coworkers", yes: 340, some: 610, no: 309 },
       { category: "Supervisors", yes: 296, some: 480, no: 483 },
       { category: "Interviews", yes: 83, some: 207, no: 969 }
@@ -95,7 +105,7 @@ const WorkplaceCommunicationChart = () => {
         .on('mouseover', function(event) {
           d3.select(this).attr('opacity', 0.8);
           tooltip.transition().duration(200).style('opacity', 0.9);
-          tooltip.html(`<strong>Would discuss with ${d.category.toLowerCase()}</strong><br>Yes: ${d.yes} (${Math.round(d.yesPercent)}%)`)
+          tooltip.html(`<strong>Would discuss with ${d.category.toLowerCase()}</strong><br>Yes: ${d.yes} (${Math.round(d.yesPercent!)}%)`)
             .style('left', `${event.pageX}px`)
             .style('top', `${event.pageY - 28}px`);
         })
@@ -105,13 +115,13 @@ const WorkplaceCommunicationChart = () => {
         })
         .transition()
         .duration(800)
-        .attr('width', x(d.yesPercent));
+        .attr('width', x(d.yesPercent!));
         
       // "Some" Segment
       g.append('rect')
         .attr('class', 'bar')
         .attr('y', y(d.category) as number)
-        .attr('x', x(d.yesPercent))
+        .attr('x', x(d.yesPercent!))
         .attr('height', y.bandwidth())
         .attr('width', 0)
         .attr('fill', color('some') as string)
@@ -119,7 +129,7 @@ const WorkplaceCommunicationChart = () => {
         .on('mouseover', function(event) {
           d3.select(this).attr('opacity', 0.8);
           tooltip.transition().duration(200).style('opacity', 0.9);
-          tooltip.html(`<strong>Would discuss with ${d.category.toLowerCase()}</strong><br>Some/Maybe: ${d.some} (${Math.round(d.somePercent)}%)`)
+          tooltip.html(`<strong>Would discuss with ${d.category.toLowerCase()}</strong><br>Some/Maybe: ${d.some} (${Math.round(d.somePercent!)}%)`)
             .style('left', `${event.pageX}px`)
             .style('top', `${event.pageY - 28}px`);
         })
@@ -130,13 +140,13 @@ const WorkplaceCommunicationChart = () => {
         .transition()
         .delay(800)
         .duration(800)
-        .attr('width', x(d.somePercent));
+        .attr('width', x(d.somePercent!));
         
       // "No" Segment
       g.append('rect')
         .attr('class', 'bar')
         .attr('y', y(d.category) as number)
-        .attr('x', x(d.yesPercent) + x(d.somePercent))
+        .attr('x', x(d.yesPercent!) + x(d.somePercent!))
         .attr('height', y.bandwidth())
         .attr('width', 0)
         .attr('fill', color('no') as string)
@@ -144,7 +154,7 @@ const WorkplaceCommunicationChart = () => {
         .on('mouseover', function(event) {
           d3.select(this).attr('opacity', 0.8);
           tooltip.transition().duration(200).style('opacity', 0.9);
-          tooltip.html(`<strong>Would discuss with ${d.category.toLowerCase()}</strong><br>No: ${d.no} (${Math.round(d.noPercent)}%)`)
+          tooltip.html(`<strong>Would discuss with ${d.category.toLowerCase()}</strong><br>No: ${d.no} (${Math.round(d.noPercent!)}%)`)
             .style('left', `${event.pageX}px`)
             .style('top', `${event.pageY - 28}px`);
         })
@@ -155,7 +165,7 @@ const WorkplaceCommunicationChart = () => {
         .transition()
         .delay(1600)
         .duration(800)
-        .attr('width', x(d.noPercent));
+        .attr('width', x(d.noPercent!));
     });
 
     // Add legend

@@ -147,7 +147,7 @@ const WellnessProgramChart = () => {
         const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
         pos[0] = radius * 0.95 * (midAngle < Math.PI ? 1 : -1);
         return [arc.centroid(d), outerArc.centroid(d), pos];
-      });
+      } as any); // Add type assertion here to fix the error
 
     // Add center text
     svg.append('text')

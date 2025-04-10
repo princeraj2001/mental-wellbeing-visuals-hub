@@ -3,15 +3,134 @@ import React, { useCallback } from 'react';
 import * as d3 from 'd3';
 import D3Container from '../D3Container';
 
+// Define types for Sankey diagram
 interface SankeyNode {
   name: string;
+  index?: number;
+  x0?: number;
+  x1?: number;
+  y0?: number;
+  y1?: number;
+  sourceLinks?: SankeyLink[];
+  targetLinks?: SankeyLink[];
 }
 
 interface SankeyLink {
-  source: number;
-  target: number;
+  source: SankeyNode | number;
+  target: SankeyNode | number;
   value: number;
+  width?: number;
+  y0?: number;
+  y1?: number;
 }
+
+interface SankeyGraph {
+  nodes: SankeyNode[];
+  links: SankeyLink[];
+}
+
+// Create our own Sankey utility functions instead of extending d3
+const createSankey = () => {
+  let nodeWidth = 24;
+  let nodePadding = 8;
+  let size = [1, 1];
+  
+  function sankeyGenerator(graph: SankeyGraph) {
+    graph.nodes.forEach((node: SankeyNode, i: number) => {
+      node.index = i;
+      node.sourceLinks = [];
+      node.targetLinks = [];
+    });
+    
+    graph.links.forEach((link: SankeyLink) => {
+      // Convert indices to actual node references
+      const sourceIndex = typeof link.source === 'number' ? link.source : link.source.index!;
+      const targetIndex = typeof link.target === 'number' ? link.target : link.target.index!;
+      
+      link.source = graph.nodes[sourceIndex];
+      link.target = graph.nodes[targetIndex];
+      
+      (link.source as SankeyNode).sourceLinks!.push(link);
+      (link.target as SankeyNode).targetLinks!.push(link);
+    });
+    
+    // Simple layout algorithm (X positions based on levels, Y positions equally spaced)
+    const levels = [
+      [0, 1], // Family History
+      [2, 3], // Treatment
+      [4, 5, 6, 7], // Work Interference
+      [8, 9, 10] // Mental Health Consequence
+    ];
+    
+    // Set X positions based on levels
+    levels.forEach((level, i) => {
+      const xPos = i * (size[0] / (levels.length - 1));
+      level.forEach(nodeIdx => {
+        graph.nodes[nodeIdx].x0 = xPos;
+        graph.nodes[nodeIdx].x1 = xPos + nodeWidth;
+      });
+    });
+    
+    // Set Y positions within each level
+    levels.forEach(level => {
+      const nodesInLevel = level.length;
+      const step = size[1] / nodesInLevel;
+      level.forEach((nodeIdx, i) => {
+        graph.nodes[nodeIdx].y0 = i * step;
+        graph.nodes[nodeIdx].y1 = (i + 0.9) * step; // 0.9 to leave some space
+      });
+    });
+    
+    // Set link paths
+    graph.links.forEach((link: SankeyLink) => {
+      link.width = Math.max(1, Math.sqrt(link.value));
+      // Y-positions for the link endpoints - simplified
+      link.y0 = (link.source as SankeyNode).y0! + ((link.source as SankeyNode).y1! - (link.source as SankeyNode).y0!) / 2;
+      link.y1 = (link.target as SankeyNode).y0! + ((link.target as SankeyNode).y1! - (link.target as SankeyNode).y0!) / 2;
+    });
+    
+    return graph;
+  }
+  
+  sankeyGenerator.nodeWidth = function(_: number) {
+    if (!arguments.length) return nodeWidth;
+    nodeWidth = _;
+    return sankeyGenerator;
+  };
+  
+  sankeyGenerator.nodePadding = function(_: number) {
+    if (!arguments.length) return nodePadding;
+    nodePadding = _;
+    return sankeyGenerator;
+  };
+  
+  sankeyGenerator.extent = function(_: number[][]) {
+    if (!arguments.length) return [[0, 0], size];
+    size = [_[1][0] - _[0][0], _[1][1] - _[0][1]];
+    return sankeyGenerator;
+  };
+
+  return sankeyGenerator;
+};
+
+// Create our Sankey link horizontal function
+const createSankeyLinkHorizontal = () => {
+  return function(d: SankeyLink) {
+    const source = d.source as SankeyNode;
+    const target = d.target as SankeyNode;
+    const x0 = source.x1!;
+    const x1 = target.x0!;
+    const y0 = d.y0!;
+    const y1 = d.y1!;
+    
+    return `
+      M ${x0},${y0}
+      C ${(x0 + x1) / 2},${y0}
+        ${(x0 + x1) / 2},${y1}
+        ${x1},${y1}
+    `;
+  };
+};
 
 const MentalHealthFlowChart = () => {
   const renderChart = useCallback((container: HTMLDivElement) => {
@@ -109,12 +228,12 @@ const MentalHealthFlowChart = () => {
     };
 
     // Create the Sankey diagram
-    const sankey = d3.sankey()
+    const sankey = createSankey()
       .nodeWidth(15)
       .nodePadding(10)
       .extent([[0, 0], [innerWidth, innerHeight]]);
 
-    // Format the data for d3-sankey
+    // Format the data for sankey
     const graph = {
       nodes: nodes.map(d => Object.assign({}, d)),
       links: links.map(d => Object.assign({}, d))
@@ -123,6 +242,9 @@ const MentalHealthFlowChart = () => {
     // Generate the layout
     sankey(graph);
 
+    // Create the horizontal link function
+    const sankeyLinkHorizontal = createSankeyLinkHorizontal();
+
     // Add the links
     const link = g.append("g")
       .selectAll(".link")
@@ -130,11 +252,12 @@ const MentalHealthFlowChart = () => {
       .enter()
       .append("path")
       .attr("class", "link")
-      .attr("d", d3.sankeyLinkHorizontal())
+      .attr("d", sankeyLinkHorizontal)
       .attr("stroke-width", d => Math.max(1, d.width as number))
       .style("stroke", d => {
-        const source = graph.nodes[d.source.index];
-        return d3.color(colorMap[source.name])?.brighter(0.5) as string;
+        const source = d.source as SankeyNode;
+        const sourceColor = d3.color(colorMap[source.name]);
+        return sourceColor ? sourceColor.brighter(0.5).toString() : "#ccc";
       })
       .style("stroke-opacity", 0.5)
       .style("fill", "none")
@@ -146,8 +269,8 @@ const MentalHealthFlowChart = () => {
           .duration(200)
           .style("opacity", 0.9);
           
-        const sourceName = graph.nodes[d.source.index].name;
-        const targetName = graph.nodes[d.target.index].name;
+        const sourceName = (d.source as SankeyNode).name;
+        const targetName = (d.target as SankeyNode).name;
           
         tooltip.html(`<strong>${sourceName}</strong> → <strong>${targetName}</strong><br>${d.value} respondents`)
           .style("left", `${event.pageX + 10}px`)
@@ -214,11 +337,14 @@ const MentalHealthFlowChart = () => {
 
     // Add the rectangles for the nodes
     node.append("rect")
-      .attr("height", d => Math.max(d.y1 - d.y0, 1))
-      .attr("width", d => d.x1 - d.x0)
+      .attr("height", d => Math.max(d.y1! - d.y0!, 1))
+      .attr("width", d => d.x1! - d.x0!)
       .style("fill", d => colorMap[d.name])
       .style("shape-rendering", "crispEdges")
-      .style("stroke", d => d3.rgb(colorMap[d.name]).darker(0.8) as string)
+      .style("stroke", d => {
+        const color = d3.rgb(colorMap[d.name]);
+        return color.darker(0.8).toString();
+      })
       .style("stroke-width", 1)
       .style("opacity", 0)
       .transition()
@@ -228,10 +354,10 @@ const MentalHealthFlowChart = () => {
 
     // Add the title for the nodes
     node.append("text")
-      .attr("x", d => (d.x0 < width / 2) ? (d.x1 - d.x0 + 6) : -6)
-      .attr("y", d => (d.y1 - d.y0) / 2)
+      .attr("x", d => (d.x0! < width / 2) ? (d.x1! - d.x0! + 6) : -6)
+      .attr("y", d => (d.y1! - d.y0!) / 2)
       .attr("dy", "0.35em")
-      .attr("text-anchor", d => (d.x0 < width / 2) ? "start" : "end")
+      .attr("text-anchor", d => (d.x0! < width / 2) ? "start" : "end")
       .text(d => {
         const nameParts = d.name.split(": ");
         return nameParts.length > 1 ? nameParts[1] : d.name;
@@ -262,17 +388,6 @@ const MentalHealthFlowChart = () => {
       .attr("font-weight", "bold")
       .attr("font-size", 12)
       .text(d => d.name);
-
-    // Add title
-    svg.append("text")
-      .attr("class", "chart-title")
-      .attr("x", width / 2)
-      .attr("y", 20)
-      .attr("text-anchor", "middle")
-      .attr("font-size", 16)
-      .attr("font-weight", "bold")
-      .text("Flow of Mental Health Experiences");
-
   }, []);
 
   return (
@@ -283,110 +398,6 @@ const MentalHealthFlowChart = () => {
       className="col-span-1"
     />
   );
-};
-
-// Add the missing d3.sankey type and implementation
-declare module 'd3' {
-  export function sankey(): any;
-  export function sankeyLinkHorizontal(): any;
-}
-
-// Simple implementation of d3.sankey for TypeScript
-// Note: This is a placeholder. In a real app, you'd use the d3-sankey library
-d3.sankey = function() {
-  let nodeWidth = 24;
-  let nodePadding = 8;
-  let size = [1, 1];
-  let nodes: any[] = [];
-  let links: any[] = [];
-  
-  function sankey(graph: any) {
-    graph.nodes.forEach((node: any, i: number) => {
-      node.index = i;
-      node.sourceLinks = [];
-      node.targetLinks = [];
-    });
-    
-    graph.links.forEach((link: any) => {
-      link.source = graph.nodes[link.source];
-      link.target = graph.nodes[link.target];
-      link.source.sourceLinks.push(link);
-      link.target.targetLinks.push(link);
-    });
-    
-    // Simple layout algorithm (X positions based on levels, Y positions equally spaced)
-    const levels = [
-      [0, 1], // Family History
-      [2, 3], // Treatment
-      [4, 5, 6, 7], // Work Interference
-      [8, 9, 10] // Mental Health Consequence
-    ];
-    
-    // Set X positions based on levels
-    levels.forEach((level, i) => {
-      const xPos = i * (size[0] / (levels.length - 1));
-      level.forEach(nodeIdx => {
-        graph.nodes[nodeIdx].x0 = xPos;
-        graph.nodes[nodeIdx].x1 = xPos + nodeWidth;
-      });
-    });
-    
-    // Set Y positions within each level
-    levels.forEach(level => {
-      const nodesInLevel = level.length;
-      const step = size[1] / nodesInLevel;
-      level.forEach((nodeIdx, i) => {
-        graph.nodes[nodeIdx].y0 = i * step;
-        graph.nodes[nodeIdx].y1 = (i + 0.9) * step; // 0.9 to leave some space
-      });
-    });
-    
-    // Set link paths
-    graph.links.forEach((link: any) => {
-      link.width = Math.max(1, Math.sqrt(link.value));
-      // Y-positions for the link endpoints - simplified
-      link.y0 = link.source.y0 + (link.source.y1 - link.source.y0) / 2;
-      link.y1 = link.target.y0 + (link.target.y1 - link.target.y0) / 2;
-    });
-    
-    return graph;
-  }
-  
-  sankey.nodeWidth = function(_: number) {
-    if (!arguments.length) return nodeWidth;
-    nodeWidth = _;
-    return sankey;
-  };
-  
-  sankey.nodePadding = function(_: number) {
-    if (!arguments.length) return nodePadding;
-    nodePadding = _;
-    return sankey;
-  };
-  
-  sankey.extent = function(_: number[][]) {
-    if (!arguments.length) return [[0, 0], size];
-    size = [_[1][0] - _[0][0], _[1][1] - _[0][1]];
-    return sankey;
-  };
-
-  return sankey;
-};
-
-d3.sankeyLinkHorizontal = function() {
-  return function(d: any) {
-    const x0 = d.source.x1;
-    const x1 = d.target.x0;
-    const y0 = d.y0;
-    const y1 = d.y1;
-    
-    return `
-      M ${x0},${y0}
-      C ${(x0 + x1) / 2},${y0}
-        ${(x0 + x1) / 2},${y1}
-        ${x1},${y1}
-    `;
-  };
 };
 
 export default MentalHealthFlowChart;

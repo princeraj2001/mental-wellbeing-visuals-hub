@@ -168,8 +168,8 @@ const GenderDistributionChart = () => {
     <D3Container
       title="Gender Distribution"
       description="Breakdown of survey respondents by gender identity"
+      className="col-span-1 md:col-span-1"
       renderChart={renderChart}
-      className="col-span-1 md:col-span-2"
     />
   );
 };

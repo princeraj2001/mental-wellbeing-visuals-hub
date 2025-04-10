@@ -68,7 +68,13 @@ const WorkplaceCommunicationChart = () => {
     const tooltip = d3.select(container)
       .append('div')
       .attr('class', 'tooltip')
-      .style('opacity', 0);
+      .style('opacity', 0)
+      .style('position', 'absolute')
+      .style('background-color', 'rgba(0, 0, 0, 0.8)')
+      .style('color', 'white')
+      .style('padding', '8px')
+      .style('border-radius', '4px')
+      .style('pointer-events', 'none');
 
     // Add X-axis
     g.append('g')

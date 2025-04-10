@@ -51,7 +51,13 @@ const WellnessProgramChart = () => {
     const tooltip = d3.select(container)
       .append('div')
       .attr('class', 'tooltip')
-      .style('opacity', 0);
+      .style('opacity', 0)
+      .style('position', 'absolute')
+      .style('background-color', 'rgba(0, 0, 0, 0.8)')
+      .style('color', 'white')
+      .style('padding', '8px')
+      .style('border-radius', '4px')
+      .style('pointer-events', 'none');
 
     // Add arcs
     const arcs = svg.selectAll('.arc')
@@ -146,8 +152,8 @@ const WellnessProgramChart = () => {
         const pos = outerArc.centroid(d);
         const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
         pos[0] = radius * 0.95 * (midAngle < Math.PI ? 1 : -1);
-        return [arc.centroid(d), outerArc.centroid(d), pos];
-      } as any); // Add type assertion here to fix the error
+        return [arc.centroid(d), outerArc.centroid(d), pos] as any;
+      });
 
     // Add center text
     svg.append('text')

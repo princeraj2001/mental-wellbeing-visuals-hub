@@ -77,7 +77,13 @@ const MentalHealthWorkImpactChart = () => {
     const tooltip = d3.select(container)
       .append('div')
       .attr('class', 'tooltip')
-      .style('opacity', 0);
+      .style('opacity', 0)
+      .style('position', 'absolute')
+      .style('background-color', 'rgba(0, 0, 0, 0.8)')
+      .style('color', 'white')
+      .style('padding', '8px')
+      .style('border-radius', '4px')
+      .style('pointer-events', 'none');
 
     // Add bars with animation
     g.selectAll('.bar')
@@ -133,6 +139,7 @@ const MentalHealthWorkImpactChart = () => {
       .enter()
       .append('text')
       .attr('class', 'value-label')
+      .attr('text-anchor', 'middle')
       .attr('x', d => (x(d.category) as number) + x.bandwidth() / 2)
       .attr('y', d => y(d.value) - 5)
       .attr('text-anchor', 'middle')

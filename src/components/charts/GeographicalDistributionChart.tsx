@@ -49,7 +49,13 @@ const GeographicalDistributionChart = () => {
     const tooltip = d3.select(container)
       .append('div')
       .attr('class', 'tooltip')
-      .style('opacity', 0);
+      .style('opacity', 0)
+      .style('position', 'absolute')
+      .style('background-color', 'rgba(0, 0, 0, 0.8)')
+      .style('color', 'white')
+      .style('padding', '8px')
+      .style('border-radius', '4px')
+      .style('pointer-events', 'none');
 
     // Color scale
     const colorScale = d3.scaleLinear<string>()
@@ -63,10 +69,11 @@ const GeographicalDistributionChart = () => {
       .range([10, 50]);
 
     // Create a force simulation
-    const simulation = d3.forceSimulation(data)
+    const simulation = d3.forceSimulation<CountryNode>()
+      .nodes(data)
       .force('center', d3.forceCenter(innerWidth / 2, innerHeight / 2))
       .force('charge', d3.forceManyBody().strength(5))
-      .force('collide', d3.forceCollide().radius(d => sizeScale(d.total) + 2))
+      .force('collide', d3.forceCollide().radius(d => sizeScale(d.total) + 2).strength(0.7))
       .on('tick', ticked);
 
     // Create bubble groups
